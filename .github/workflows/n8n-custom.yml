@@ -1,0 +1,68 @@
+name: Build and Push Custom n8n Image
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # Every Monday at 2:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Get Latest n8n Version
+      id: get-version
+      run: |
+        VERSION=$(curl -s https://api.github.com/repos/n8n-io/n8n/releases/latest | jq -r '.tag_name')
+        echo "Latest version: $VERSION"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Check if image already exists on Docker Hub
+      id: check-image
+      run: |
+        if curl --silent --fail "https://hub.docker.com/v2/repositories/ziadloo/n8n/tags/${{ env.VERSION }}/"; then
+          echo "Image already exists for version $VERSION."
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "Image does not exist."
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Update Dockerfile base image
+      if: steps.check-image.outputs.exists == 'false'
+      run: |
+        # Adjust if your Dockerfile uses n8n base image in FROM
+        sed -i "s|FROM n8nio/n8n:.*|FROM n8nio/n8n:${{ env.VERSION }}|" Dockerfile
+
+    - name: Commit and Push Dockerfile Update
+      if: steps.check-image.outputs.exists == 'false'
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        git add Dockerfile
+        git commit -m "Update n8n base image to $VERSION" || echo "No changes to commit"
+        git push origin HEAD
+
+    - name: Log in to Docker Hub
+      if: steps.check-image.outputs.exists == 'false'
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and Push Docker Image
+      if: steps.check-image.outputs.exists == 'false'
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          ziadloo/n8n:${{ env.VERSION }}
+          ziadloo/n8n:latest
