@@ -19,8 +19,10 @@ jobs:
     - name: Get Latest n8n Version
       id: get-version
       run: |
-        VERSION=$(curl -s https://api.github.com/repos/n8n-io/n8n/releases/latest | jq -r '.tag_name')
-        echo "Latest version: $VERSION"
+        RAW_VERSION=$(curl -s https://api.github.com/repos/n8n-io/n8n/releases/latest | jq -r '.tag_name')
+        VERSION=${RAW_VERSION#*@}   # strip everything up to and including '@'
+        echo "Raw version: $RAW_VERSION"
+        echo "Using version: $VERSION"
         echo "VERSION=$VERSION" >> $GITHUB_ENV
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
