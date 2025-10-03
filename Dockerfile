@@ -10,7 +10,8 @@ RUN apk add --no-cache \
       build-base \
       git \
       bash \
-      ca-certificates
+      ca-certificates \
+      pkg-config
 
 RUN mkdir -p /init && chown -R root:root /init
 
