@@ -40,8 +40,8 @@ jobs:
     - name: Update Dockerfile base image
       if: steps.check-image.outputs.exists == 'false'
       run: |
-        # Adjust if your Dockerfile uses n8n base image in FROM
-        sed -i "s|FROM n8nio/n8n:.*|FROM n8nio/n8n:${{ env.VERSION }}|" Dockerfile
+        # Adjust if your Dockerfile uses n8nio/runners base image in FROM
+        sed -i "s|FROM n8nio/runners:.*|FROM n8nio/runners:${{ env.VERSION }}|" Dockerfile
 
     - name: Commit and Push Dockerfile Update
       if: steps.check-image.outputs.exists == 'false'
@@ -49,7 +49,7 @@ jobs:
         git config --global user.name "github-actions"
         git config --global user.email "github-actions@github.com"
         git add Dockerfile
-        git commit -m "Update n8n base image to $VERSION" || echo "No changes to commit"
+        git commit -m "Update n8n-runner base image to $VERSION" || echo "No changes to commit"
         git push origin HEAD
 
     - name: Log in to Docker Hub
@@ -66,5 +66,5 @@ jobs:
         context: .
         push: true
         tags: |
-          ziadloo/n8n:${{ env.VERSION }}
-          ziadloo/n8n:latest
+          ziadloo/n8n-task-runner:${{ env.VERSION }}
+          ziadloo/n8n-task-runner:latest
