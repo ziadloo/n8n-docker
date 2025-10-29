@@ -22,31 +22,33 @@ set -euo pipefail
 
 echo "[init] Checking for /init/requirements.txt and /init/package.json..."
 
-if [ -f /init/requirements.txt ]; then
-  echo "[init] Installing Python dependencies..."
-  uv pip install -r /init/requirements.txt || {
-    echo "[init][error] pip install failed"; exit 1;
-  }
-else
-  echo "[init] No Python requirements found."
-fi
+if [ "${SKIP_PACKAGE_INSTALLATION:-false}" != "true" ]; then
+  if [ -f /init/requirements.txt ]; then
+    echo "[init] Installing Python dependencies..."
+    uv pip install -r /init/requirements.txt || {
+      echo "[init][error] pip install failed"; exit 1;
+    }
+  else
+    echo "[init] No Python requirements found."
+  fi
 
-# Cannot be done at the moment since not npm not pnpm are available at this point of code
-# if [ -f /init/package.json ]; then
-#   echo "[init] Installing global npm packages from /init..."
-#   npm install -g /init --unsafe-perm --no-audit --no-fund || {
-#     echo "[init][warning] npm install failed, retrying with custom prefix..."
-#     PREFIX_DIR="/root/.npm-global"
-#     mkdir -p "${PREFIX_DIR}"
-#     npm config set prefix "${PREFIX_DIR}"
-#     export PATH="${PREFIX_DIR}/bin:${PATH}"
-#     npm install -g /init --unsafe-perm --no-audit --no-fund || {
-#       echo "[init][error] npm install failed completely"
-#     }
-#   }
-# else
-#   echo "[init] No package.json found."
-# fi
+  # Cannot be done at the moment since not npm not pnpm are available at this point of code
+  # if [ -f /init/package.json ]; then
+  #   echo "[init] Installing global npm packages from /init..."
+  #   npm install -g /init --unsafe-perm --no-audit --no-fund || {
+  #     echo "[init][warning] npm install failed, retrying with custom prefix..."
+  #     PREFIX_DIR="/root/.npm-global"
+  #     mkdir -p "${PREFIX_DIR}"
+  #     npm config set prefix "${PREFIX_DIR}"
+  #     export PATH="${PREFIX_DIR}/bin:${PATH}"
+  #     npm install -g /init --unsafe-perm --no-audit --no-fund || {
+  #       echo "[init][error] npm install failed completely"
+  #     }
+  #   }
+  # else
+  #   echo "[init] No package.json found."
+  # fi
+fi
 
 echo "[init] Starting n8n task runners..."
 exec tini -- /usr/local/bin/task-runner-launcher "$@"
