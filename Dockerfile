@@ -69,7 +69,7 @@ ENV VIRTUAL_ENV=/opt/runners/task-runner-python/.venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN chmod +x /docker-entrypoint.sh
-RUN chown runner:runner -R /opt/runners/task-runner-python/*
+RUN chown runner:runner -R /opt/runners/task-runner-python/* /opt/runners/task-runner-python/.*
 
 USER runner
 
